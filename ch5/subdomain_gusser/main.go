@@ -52,6 +52,27 @@ func lookupCNAME(fqdn, serverAddr string) ([]string, error) {
 	return fqdns, nil
 }
 
+func lookup(fqdn, serverAddr string) []result {
+	var results []result
+	var cfqdn = fqdn
+	for {
+		cnames, err := lookupCNAME(cfqdn, serverAddr)
+		if err == nil && len(cnames) > 0 {
+			cfqdn = cnames[0]
+			continue
+		}
+		ips, err := lookupA(cfqdn, serverAddr)
+		if err != nil {
+			break
+		}
+		for _, ip := range ips {
+			results = append(results, result{IPAddress: ip, Hostname: fqdn})
+		}
+		break
+	}
+	return results
+}
+
 func main() {
 	var (
 		flDomain      = flag.String("domain", "", "The domain to perform guessing against.")
